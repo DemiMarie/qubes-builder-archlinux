@@ -51,11 +51,7 @@ mount --bind "$INSTALLDIR" "${BOOTSTRAP_DIR}/mnt"
 
 # TODO: This doesn't seem super elegant
 echo "  --> Setting pacman mirrorlist as '${ARCHLINUX_MIRROR[@]}'..."
-ARCHLINUX_MIRRORLIST=$(cat ${CACHEDIR}/bootstrap/etc/pacman.d/mirrorlist.dist)
-for MIRROR_ENTRY in "${ARCHLINUX_MIRROR[@]}"
-do
-  ARCHLINUX_MIRRORLIST=$(sed "s|#Server = ${MIRROR_ENTRY}/|Server = ${MIRROR_ENTRY}/|" <<< $ARCHLINUX_MIRRORLIST)
-done
+ARCHLINUX_MIRRORLIST='Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch'
 echo "$ARCHLINUX_MIRRORLIST" > "${CACHEDIR}/bootstrap/etc/pacman.d/mirrorlist"
 cp /etc/resolv.conf "${BOOTSTRAP_DIR}/etc/"
 

@@ -33,8 +33,10 @@ env $CHROOT_ENV chroot "$CHROOT_DIR" /bin/sh -c \
 
 # Update archlinux keyring first so that Archlinux can be updated even after a long time
 env $CHROOT_ENV chroot "$CHROOT_DIR" /bin/sh -c \
-    "http_proxy='${REPO_PROXY}' pacman -Sy --noconfirm archlinux-keyring"
+    'http_proxy=$1 https_proxy=$1 pacman -Sy --noconfirm archlinux-keyring' \
+    -- sh "$REPO_PROXY"
 
 # Now update system
 env $CHROOT_ENV chroot "$CHROOT_DIR" /bin/sh -c \
-    "http_proxy='${REPO_PROXY}' pacman -Syu --noconfirm"
+    'http_proxy=$1 https_proxy=$1 pacman -Syu --noconfirm' \
+    -- sh "$REPO_PROXY"

@@ -15,6 +15,8 @@
 PACKAGE_LIST = $(ARCH_BUILD_DIRS)
 DIST_BUILD_DIR = /home/user
 
+proxy := $(and $(REPO_PROXY),http_proxy='$(subst ','\'',$(REPO_PROXY))' https_proxy='$(subst ','\'',$(REPO_PROXY))')
+
 ### Local variables
 RUN_AS_USER = user
 
@@ -128,7 +130,7 @@ dist-build-dep:
 	@echo "en_US.UTF-8 UTF-8" | sudo tee -a $(CHROOT_DIR)/etc/locale.gen
 	@sudo $(CHROOT_ENV) chroot "$(CHROOT_DIR)" locale-gen
 	@echo "LANG=en_US.UTF-8" | sudo tee -a $(CHROOT_DIR)/etc/locale.conf
-	@sudo -E "$(ARCHLINUX_PLUGIN_DIR)/update-local-repo.sh" $(DIST)
+	@until sudo -E $(proxy) -- "$(ARCHLINUX_PLUGIN_DIR)/update-local-repo.sh" $(DIST); do :; done
 
 # dist-package - compile package (should operate on chroot directory)
 # TODO: makepkg doesn't seem to honor $http_proxy
@@ -138,7 +140,7 @@ ifndef PACKAGE
 	$(error "PACKAGE need to be set!")
 endif
 	@echo "  --> Building package in $(DIST_SRC)"
-	sudo $(CHROOT_ENV) chroot "$(CHROOT_DIR)" su user -c 'cd "$(DIST_SRC)" && cp $(PACKAGE)/PKGBUILD* ./ && env http_proxy="$(REPO_PROXY)" SOURCE_DATE_EPOCH=$(shell git -C "$$ORIG_SRC" log -1 --pretty=format:%ct) makepkg --syncdeps --noconfirm --skipinteg'
+	sudo $(CHROOT_ENV) chroot "$(CHROOT_DIR)" su user -c 'cd "$(DIST_SRC)" && cp -- "$$1/PKGBUILD"* ./ && http_proxy=$$2 https_proxy=$$2 SOURCE_DATE_EPOCH=$(shell git -C "$$ORIG_SRC" log -1 --pretty=format:%ct) makepkg --syncdeps --noconfirm --skipinteg' -- bash $(call shell_quote,$(PACKAGE)) $(call shell_quote,$(REPO_PROXY))
 
 # dist-copy-out - copy compiled package out of chroot env; this target should
 #     move packages to ORIG_SRC (distro-specific subdir) and hardlink them to
